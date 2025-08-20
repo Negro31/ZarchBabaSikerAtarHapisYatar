@@ -16,19 +16,11 @@
     </style>
 </head>
 <body>
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.152.2/examples/jsm/"
-            }
-        }
-    </script>
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-        // Sahne, kamera ve renderer oluştur
+    <script src="https://unpkg.com/three@0.152.2/build/three.js"></script>
+    <script src="https://unpkg.com/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.152.2/examples/js/loaders/FontLoader.js"></script>
+    <script>
+        // Sahne, kamera ve renderer
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer();
@@ -38,13 +30,17 @@
         // Ay modeli
         const geometry = new THREE.SphereGeometry(5, 32, 32);
         const textureLoader = new THREE.TextureLoader();
-        const moonTexture = textureLoader.load('https://raw.githubusercontent.com/negro31/ZarchBabaSikerAtarHapisYatar/main/moonmap2k.jpg'); // Gerçekçi ay dokusu
+        const moonTexture = textureLoader.load('./ayfotosu.jpg', () => {
+            console.log("Dokuya erişildi");
+        }, undefined, (err) => {
+            console.error("Dokuya erişim hatası:", err);
+        });
         const material = new THREE.MeshPhongMaterial({ map: moonTexture, shininess: 10 });
         const moon = new THREE.Mesh(geometry, material);
         moon.position.set(0, 0, 0);
         scene.add(moon);
 
-        // Işık ekle (parlama için)
+        // Işık (parlama için)
         const light = new THREE.PointLight(0xffffff, 1, 100);
         light.position.set(10, 10, 10);
         scene.add(light);
@@ -59,18 +55,19 @@
                 height: 0.1,
                 curveSegments: 12,
             });
-            const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // Parlak sarı
             const text = new THREE.Mesh(textGeometry, textMaterial);
             text.position.set(6, 0, 0); // Ayın etrafında başlangıç pozisyonu
             scene.add(text);
 
-            // Metni ay etrafında döndür
+            // Metni ay etrafında döndür (çekim yasası benzeri eliptik yörünge)
             function animateText() {
                 const radius = 6;
                 const angle = Date.now() * 0.0005; // Yavaş bir dönüş
-                text.position.x = Math.cos(angle) * radius;
-                text.position.z = Math.sin(angle) * radius;
-                text.lookAt(moon.position);
+                const distance = radius + Math.sin(Date.now() * 0.001) * 0.5; // Hafif eliptik efekt
+                text.position.x = Math.cos(angle) * distance;
+                text.position.z = Math.sin(angle) * distance;
+                text.lookAt(moon.position); // Metni aya bakacak şekilde
             }
         });
 
@@ -81,7 +78,7 @@
         function animate() {
             requestAnimationFrame(animate);
             moon.rotation.y += 0.001; // Ayın kendi etrafında dönmesi
-            // Metin animasyonu buraya entegre ediliyor
+            if (typeof animateText === 'function') animateText(); // Metin animasyonu
             renderer.render(scene, camera);
         }
         animate();
@@ -92,9 +89,6 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
         });
-
-        // Kontrol (isteğe bağlı)
-        const controls = new OrbitControls(camera, renderer.domElement);
     </script>
 </body>
 </html>
