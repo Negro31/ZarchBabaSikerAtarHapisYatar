@@ -1,65 +1,77 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Furkuşkom</title>
-  <style>
-    body { margin: 0; overflow: hidden; background: black; }
-    canvas { display: block; }
-    .orbit-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 2em;
-      font-weight: bold;
-      color: white;
-      text-shadow: 0 0 20px white;
-      animation: orbit 10s linear infinite;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ay ve Yıldızlar</title>
+<style>
+  body {
+    margin: 0;
+    background: radial-gradient(ellipse at bottom, #0b0c1a, #000000);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Ay */
+  .moon {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20vw;
+    height: 20vw;
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #f0f0f0, #a0a0a0);
+    box-shadow: 0 0 40px 15px rgba(255,255,255,0.8);
+  }
+
+  /* Yıldızlar */
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: twinkle 2s infinite alternate;
+  }
+
+  @keyframes twinkle {
+    from {opacity: 0.3;}
+    to {opacity: 1;}
+  }
+
+  /* Responsive ay ve yıldız boyutları */
+  @media (max-width: 600px) {
+    .moon {
+      width: 40vw;
+      height: 40vw;
     }
-    @keyframes orbit {
-      0% { transform: translate(-50%, -50%) rotate(0deg) translateX(200px) rotate(0deg); }
-      100% { transform: translate(-50%, -50%) rotate(360deg) translateX(200px) rotate(-360deg); }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
-  <div class="orbit-text">Furkuşkom</div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script>
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
 
-    // Işık
-    const light = new THREE.PointLight(0xffffff, 1);
-    light.position.set(10, 10, 10);
-    scene.add(light);
+<div class="moon"></div>
 
-    // Ay dokusu
-    const textureLoader = new THREE.TextureLoader();
-    const moonTexture = textureLoader.load('https://threejsfundamentals.org/threejs/resources/images/moon.jpg');
-    const geometry = new THREE.SphereGeometry(2, 64, 64);
-    const material = new THREE.MeshPhongMaterial({ map: moonTexture });
-    const moon = new THREE.Mesh(geometry, material);
-    scene.add(moon);
+<script>
+  // Yıldız oluştur
+  const starCount = 100; // yıldız sayısı
+  const body = document.body;
 
-    camera.position.z = 6;
+  for(let i = 0; i < starCount; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    const size = Math.random() * 3 + 1; // 1-4px arası boyut
+    star.style.width = size + 'px';
+    star.style.height = size + 'px';
+    star.style.top = Math.random() * 100 + 'vh';
+    star.style.left = Math.random() * 100 + 'vw';
+    star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+    body.appendChild(star);
+  }
+</script>
 
-    function animate() {
-      requestAnimationFrame(animate);
-      moon.rotation.y += 0.003; // Ay kendi etrafında dönüyor
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
 </body>
 </html>
