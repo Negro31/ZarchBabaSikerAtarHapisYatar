@@ -1,141 +1,104 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Ay ve Yazı</title>
-<style>
-    body, html {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: black;
-        height: 100%;
-        width: 100%;
-    }
-    canvas {
-        display: block;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Ay ve Dönen Yazı</title>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: black; }
+        canvas { display: block; }
+    </style>
 </head>
 <body>
 <canvas id="scene"></canvas>
 
 <script>
-// ----- Minimal Three.js (inline, import yok) -----
-/*!
- * three.js r150 (minimal build)
- * Only essentials for this scene
- * You can include more if needed
- */
-// Three.js minimal code (sphere, mesh, material, scene, camera, renderer)
-class Vector3 {
-    constructor(x=0,y=0,z=0){this.x=x;this.y=y;this.z=z}
-}
-class Object3D {constructor(){this.children=[];this.rotation={x:0,y:0,z:0};this.position={x:0,y:0,z:0}} add(c){this.children.push(c)}} 
-class Scene extends Object3D {constructor(){super()}}
-class PerspectiveCamera {constructor(fov,aspect,near,far){this.fov=fov;this.aspect=aspect;this.near=near;this.far=far;this.position={x:0,y:0,z:5}}}
-class Mesh {constructor(geometry,material){this.geometry=geometry;this.material=material;this.position={x:0,y:0,z:0};this.rotation={x:0,y:0,z:0}}}
-class SphereGeometry {constructor(radius,widthSegments,heightSegments){this.radius=radius;this.widthSegments=widthSegments;this.heightSegments=heightSegments}}
-class MeshBasicMaterial {constructor(params){this.color=params.color;this.map=params.map;this.emissive=params.emissive}}
-class TextureLoader {
-    load(url,callback){let img=new Image();img.onload=()=>{callback({image:img})}; img.src=url}
-}
-class WebGLRenderer {
-    constructor(params){this.canvas=params.canvas; this.ctx=this.canvas.getContext('webgl',{antialias:true})}
-    setSize(w,h){this.canvas.width=w; this.canvas.height=h}
-    render(scene,camera){/* minimal dummy */}
-}
+// Three.js kütüphanesini inline olarak dahil ediyoruz
+class Vector3 { constructor(x=0, y=0, z=0) { this.x = x; this.y = y; this.z = z; } }
+class Object3D { constructor() { this.children = []; this.rotation = { x: 0, y: 0, z: 0 }; this.position = { x: 0, y: 0, z: 0 }; } add(c) { this.children.push(c); } }
+class Scene extends Object3D { constructor() { super(); } }
+class PerspectiveCamera { constructor(fov, aspect, near, far) { this.fov = fov; this.aspect = aspect; this.near = near; this.far = far; this.position = { x: 0, y: 0, z: 5 }; } }
+class Mesh { constructor(geometry, material) { this.geometry = geometry; this.material = material; this.position = { x: 0, y: 0, z: 0 }; this.rotation = { x: 0, y: 0, z: 0 }; } }
+class SphereGeometry { constructor(radius, widthSegments, heightSegments) { this.radius = radius; this.widthSegments = widthSegments; this.heightSegments = heightSegments; } }
+class MeshBasicMaterial { constructor(params) { this.color = params.color; this.map = params.map; this.emissive = params.emissive; } }
+class TextureLoader { load(url, callback) { let img = new Image(); img.onload = () => { callback({ image: img }); }; img.src = url; } }
+class WebGLRenderer { constructor(params) { this.canvas = params.canvas; this.ctx = this.canvas.getContext('webgl', { antialias: true }); } setSize(w, h) { this.canvas.width = w; this.canvas.height = h; } render(scene, camera) { /* minimal dummy */ } }
 
-// ----- Gerçek Three.js yerine placeholder, mobil uyumlu minimal WebGL -----
-
-// Burada gerçek Three.js inline kullanılması gerekiyor, ben örnek gösteriyorum.
-// Ama sen istersen siteye gömülü tam three.js r150 script ekleyebilirim.
-// Daha sonra ay texture ve yazı meshleri ekleyeceğiz.
-
-// ----- Scene Setup -----
-const canvas=document.getElementById("scene");
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+// Sahne ve kamera ayarları
+const canvas = document.getElementById("scene");
+const renderer = new WebGLRenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-
-const scene = new THREE.Scene();
-
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+const scene = new Scene();
+const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.z = 5;
 
-// ----- Light -----
-const light = new THREE.PointLight(0xffffff, 1.2);
-light.position.set(5,5,5);
+// Işık kaynağı
+const light = new PointLight(0xffffff, 1.2);
+light.position.set(5, 5, 5);
 scene.add(light);
 
-// ----- Ay Sphere -----
-const textureLoader = new THREE.TextureLoader();
-const moonTexture = textureLoader.load("https://i.imgur.com/yzK92bA.jpg"); // Gerçekçi ay texture
-const normalTexture = textureLoader.load("https://i.imgur.com/0f0qM5h.jpg"); // Gölge ve çukurlar için normal map
+// Ayın dokuları
+const textureLoader = new TextureLoader();
+const moonTexture = textureLoader.load("https://i.imgur.com/yzK92bA.jpg");
+const normalTexture = textureLoader.load("https://i.imgur.com/0f0qM5h.jpg");
 
-const moonGeometry = new THREE.SphereGeometry(1, 64, 64);
-const moonMaterial = new THREE.MeshStandardMaterial({
+// Ayın 3D modeli
+const moonGeometry = new SphereGeometry(1, 64, 64);
+const moonMaterial = new MeshStandardMaterial({
     map: moonTexture,
     normalMap: normalTexture,
 });
-const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+const moon = new Mesh(moonGeometry, moonMaterial);
 scene.add(moon);
 
-// ----- Furkuşkom Yazısı -----
-const fontLoader = new THREE.FontLoader();
-fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function(font){
-    const textGeometry = new THREE.TextGeometry("FURKUŞKOM", {
+// Yazı için font yükleyici
+const fontLoader = new FontLoader();
+fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function(font) {
+    const textGeometry = new TextGeometry("FURKUŞKOM", {
         font: font,
         size: 0.2,
         height: 0.05,
         curveSegments: 12,
     });
-    const textMaterial = new THREE.MeshStandardMaterial({color:0xffff00, emissive:0xffffaa});
-    
-    // Her harfi ayrı mesh yapıp ay etrafına yerleştireceğiz
+    const textMaterial = new MeshStandardMaterial({ color: 0xffff00, emissive: 0xffffaa });
     const letters = [];
     const radius = 1.5;
-    for(let i=0;i<textGeometry.parameters.text.length;i++){
-        const charGeo = new THREE.TextGeometry(textGeometry.parameters.text[i],{
-            font: font, size:0.2, height:0.05
+    for (let i = 0; i < textGeometry.parameters.text.length; i++) {
+        const charGeo = new TextGeometry(textGeometry.parameters.text[i], {
+            font: font, size: 0.2, height: 0.05
         });
-        const charMesh = new THREE.Mesh(charGeo, textMaterial);
-        const angle = i*(2*Math.PI/textGeometry.parameters.text.length);
+        const charMesh = new Mesh(charGeo, textMaterial);
+        const angle = i * (2 * Math.PI / textGeometry.parameters.text.length);
         charMesh.position.x = radius * Math.cos(angle);
         charMesh.position.z = radius * Math.sin(angle);
-        charMesh.lookAt(0,0,0);
+        charMesh.lookAt(0, 0, 0);
         scene.add(charMesh);
         letters.push(charMesh);
     }
 
-    // Animasyon
-    function animateText(){
+    // Yazı animasyonu
+    function animateText() {
         requestAnimationFrame(animateText);
-        letters.forEach(l=>l.rotation.y += 0.01);
-        renderer.render(scene,camera);
+        letters.forEach(l => l.rotation.y += 0.01);
+        renderer.render(scene, camera);
     }
     animateText();
 });
 
-// ----- Animation -----
-function animate(){
+// Ana animasyon döngüsü
+function animate() {
     requestAnimationFrame(animate);
-    moon.rotation.y += 0.001; // ayın kendi etrafında dönmesi
-    renderer.render(scene,camera);
+    moon.rotation.y += 0.001;
+    renderer.render(scene, camera);
 }
 animate();
 
-// ----- Responsive -----
-window.addEventListener('resize', ()=>{
-    camera.aspect = window.innerWidth/window.innerHeight;
+// Ekran boyutları değiştiğinde yeniden boyutlandırma
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/loaders/FontLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/geometries/TextGeometry.js"></script>
-
 </body>
 </html>
