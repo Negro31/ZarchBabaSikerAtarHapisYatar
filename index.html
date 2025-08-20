@@ -3,78 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gerçekçi 3D Ay ve Yazı</title>
+<title>3D Ay Test</title>
 <style>
-  body, html { margin: 0; padding: 0; overflow: hidden; background: black; }
-  canvas { display: block; }
+  body, html { margin:0; padding:0; overflow:hidden; background:black; }
+  canvas { display:block; }
 </style>
 </head>
 <body>
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/loaders/FontLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/geometries/TextGeometry.js"></script>
-
 <script>
-// Renderer ve scene
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.z = 3;
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
 
-// Işık
-const light = new THREE.PointLight(0xffffff, 1.5);
-light.position.set(5,5,5);
-scene.add(light);
-
-// Ay
-const textureLoader = new THREE.TextureLoader();
-const moonTexture = textureLoader.load("https://i.imgur.com/yzK92bA.jpg");
-const normalTexture = textureLoader.load("https://i.imgur.com/0f0qM5h.jpg");
-
-const moonGeometry = new THREE.SphereGeometry(1, 64, 64);
-const moonMaterial = new THREE.MeshStandardMaterial({
-    map: moonTexture,
-    normalMap: normalTexture
-});
-const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+// Basit Ay
+const geometry = new THREE.SphereGeometry(1, 32, 32);
+const material = new THREE.MeshBasicMaterial({color:0x888888, wireframe:true});
+const moon = new THREE.Mesh(geometry, material);
 scene.add(moon);
 
-// Ay etrafında yazı
-const fontLoader = new THREE.FontLoader();
-fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function(font){
-    const textMaterial = new THREE.MeshStandardMaterial({color:0xffff00, emissive:0xffffaa});
-    const text = "FURKUŞKOM";
-    const radius = 1.5;
-    const letters = [];
-
-    for(let i=0;i<text.length;i++){
-        const charGeo = new THREE.TextGeometry(text[i], {font:font, size:0.2, height:0.05, curveSegments:12});
-        const charMesh = new THREE.Mesh(charGeo, textMaterial);
-        const angle = i * (2*Math.PI/text.length);
-        charMesh.position.x = radius * Math.cos(angle);
-        charMesh.position.z = radius * Math.sin(angle);
-        charMesh.lookAt(0,0,0);
-        scene.add(charMesh);
-        letters.push(charMesh);
-    }
-
-    function animateLetters(){
-        requestAnimationFrame(animateLetters);
-        letters.forEach(l => l.rotation.y += 0.01);
-    }
-    animateLetters();
-});
-
-// Animasyon
-function animate(){
-    requestAnimationFrame(animate);
-    moon.rotation.y += 0.001;
-    renderer.render(scene,camera);
+function animate() {
+  requestAnimationFrame(animate);
+  moon.rotation.y += 0.01;
+  renderer.render(scene, camera);
 }
 animate();
 
