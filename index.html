@@ -1,114 +1,93 @@
 <!DOCTYPE html>
 <html lang="tr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Furkuşkom Ay</title>
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-        background: black;
-      }
-      canvas {
-        display: block;
-      }
-    </style>
-  </head>
-  <body>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/loaders/FontLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/geometries/TextGeometry.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Furkuşkom Ay</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: black; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.150.0/examples/jsm/controls/OrbitControls.js';
+    import { FontLoader } from 'https://cdn.jsdelivr.net/npm/three@0.150.0/examples/jsm/loaders/FontLoader.js';
+    import { TextGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.150.0/examples/jsm/geometries/TextGeometry.js';
 
-    <script>
-      // Sahne, kamera, renderer
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.z = 5;
+    // SAHNE
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-      // Işıklar
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-      scene.add(ambientLight);
+    // IŞIKLAR
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
 
-      const pointLight = new THREE.PointLight(0xffffff, 1);
-      pointLight.position.set(5, 5, 5);
-      scene.add(pointLight);
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
 
-      // Ay dokusu
-      const textureLoader = new THREE.TextureLoader();
-      const moonTexture = textureLoader.load("https://threejs.org/examples/textures/moon.jpg");
+    // AY MODELİ
+    const textureLoader = new THREE.TextureLoader();
+    const moonTexture = textureLoader.load("https://threejs.org/examples/textures/moon.jpg");
+    const moonGeometry = new THREE.SphereGeometry(1.5, 64, 64);
+    const moonMaterial = new THREE.MeshPhongMaterial({ map: moonTexture });
+    const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+    scene.add(moon);
 
-      const moonGeometry = new THREE.SphereGeometry(1.5, 64, 64);
-      const moonMaterial = new THREE.MeshPhongMaterial({
-        map: moonTexture,
+    // YAZI
+    const fontLoader = new FontLoader();
+    fontLoader.load("https://threejs.org/examples/fonts/helvetiker_bold.typeface.json", (font) => {
+      const textMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffff00,
+        emissive: 0xffcc00,
       });
-      const moon = new THREE.Mesh(moonGeometry, moonMaterial);
-      scene.add(moon);
 
-      // "FURKUŞKOM" yazısı ekle
-      const fontLoader = new THREE.FontLoader();
-      fontLoader.load("https://threejs.org/examples/fonts/helvetiker_bold.typeface.json", (font) => {
-        const textGeometry = new THREE.TextGeometry("FURKUŞKOM", {
+      const radius = 2.3;
+      const group = new THREE.Group();
+      const text = "FURKUŞKOM";
+
+      for (let i = 0; i < text.length; i++) {
+        const charGeometry = new TextGeometry(text[i], {
           font: font,
           size: 0.3,
           height: 0.05,
         });
+        const charMesh = new THREE.Mesh(charGeometry, textMaterial);
 
-        const textMaterial = new THREE.MeshPhongMaterial({
-          color: 0xffff00,
-          emissive: 0xffcc00,
-        });
+        const angle = (i / text.length) * Math.PI * 2;
+        charMesh.position.x = Math.cos(angle) * radius;
+        charMesh.position.y = Math.sin(angle) * radius;
+        charMesh.position.z = 0;
 
-        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        charMesh.lookAt(moon.position);
+        group.add(charMesh);
+      }
 
-        // Yazıyı halka gibi ayın etrafına yerleştireceğiz
-        const radius = 2.3;
-        const group = new THREE.Group();
+      scene.add(group);
 
-        // Harfleri tek tek dağıt
-        const text = "FURKUŞKOM";
-        for (let i = 0; i < text.length; i++) {
-          const charGeometry = new THREE.TextGeometry(text[i], {
-            font: font,
-            size: 0.3,
-            height: 0.05,
-          });
-          const charMesh = new THREE.Mesh(charGeometry, textMaterial);
+      // Animasyon
+      function animate() {
+        requestAnimationFrame(animate);
+        moon.rotation.y += 0.002;
+        group.rotation.z += 0.002;
+        renderer.render(scene, camera);
+      }
+      animate();
+    });
 
-          const angle = (i / text.length) * Math.PI * 2;
-          charMesh.position.x = Math.cos(angle) * radius;
-          charMesh.position.y = Math.sin(angle) * radius;
-          charMesh.position.z = 0;
-
-          charMesh.lookAt(moon.position);
-          group.add(charMesh);
-        }
-
-        scene.add(group);
-
-        // Animasyon
-        function animate() {
-          requestAnimationFrame(animate);
-
-          moon.rotation.y += 0.002; // Ay kendi etrafında dönsün
-          group.rotation.z += 0.002; // Yazı ayın etrafında dönsün
-
-          renderer.render(scene, camera);
-        }
-        animate();
-      });
-
-      // Responsive
-      window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-    </script>
-  </body>
+    // Responsive
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
 </html>
